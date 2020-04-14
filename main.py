@@ -18,6 +18,7 @@ yearlyAverageCo2Dict = {}
 validYears = []
 personalizedYears = []
 yearlyCo2Dict = {}
+variatingYearlyMonthlyCo2Dict = {}
 def bulbs(sort):
   for i in range(len(sort)):
     for i in range(1, len(sort)):
@@ -39,6 +40,7 @@ for i in range(len(Co2Data)):
     yearlyMonthlyCo2Dict[int(Co2Data[i]['Year'])] = []
     secondYearlyMonthlyCo2Dict[float(Co2Data[i]['Decimal Date'])] = 0
     yearlyCo2Dict[int(Co2Data[i]['Year'])] = []
+    variatingYearlyMonthlyCo2Dict[float(Co2Data[i]['Decimal Date'])] = 0
 for i in range(len(Co2Data)):
   Years.add(int(Co2Data[i]['Year']))
   if Co2Data[i]['Carbon Dioxide (ppm)'] != '':
@@ -52,6 +54,17 @@ Years = bulbs(Years)
 tempYears = Years
 for i in range(len(Years)):
   Years[i] = str(Years[i])
+mean = sum(secondYearlyMonthlyCo2Dict.values()) / len(secondYearlyMonthlyCo2Dict.values())
+if len(str(mean).split('.')[1]) > 2:
+    mean = float(str(mean).split('.')[0] + '.' + str(mean).split('.')[1][0 : 2])
+for i in range(len(validMonthlyYears)):
+  if mean > secondYearlyMonthlyCo2Dict[validMonthlyYears[i]]:
+    variatingYearlyMonthlyCo2Dict[validMonthlyYears[i]] = mean - secondYearlyMonthlyCo2Dict[validMonthlyYears[i]]
+  else:
+    variatingYearlyMonthlyCo2Dict[validMonthlyYears[i]] = secondYearlyMonthlyCo2Dict[validMonthlyYears[i]] - mean
+for j in validMonthlyYears:
+  if len(str(variatingYearlyMonthlyCo2Dict[j]).split('.')[1]) > 2:
+    variatingYearlyMonthlyCo2Dict[j] = float(str(variatingYearlyMonthlyCo2Dict[j]).split('.')[0] + '.' + str(variatingYearlyMonthlyCo2Dict[j]).split('.')[1][0 : 2])
 startAndEndDates = {'Start Date': input('Please type a start year between 1958 and 2017 for a range of data to plot: '), 'End Date': input('Please type a end year higher than your start years and between 1958 and 2017 for a range of data to plot: ')}
 while startAndEndDates['Start Date'] == startAndEndDates['End Date'] or (startAndEndDates['Start Date'] not in Years or startAndEndDates['End Date'] not in Years) or (int(startAndEndDates['Start Date']) > int(max(tempYears)) or int(startAndEndDates['Start Date']) < int(min(tempYears))) or (int(startAndEndDates['End Date']) > int(max(tempYears)) and int(startAndEndDates['End Date']) < int(min(tempYears))):
   print('Dates Invalid!')
@@ -61,10 +74,10 @@ startAndEndDates['End Date'] = int(startAndEndDates['End Date'])
 if startAndEndDates['Start Date'] > startAndEndDates['End Date']:
   startAndEndDates['Start Date'], startAndEndDates['End Date'] = startAndEndDates['End Date'], startAndEndDates['Start Date']
   print('You set the start year greater than the end year, start year and end year swapped:\n  Start Year: ' + str(startAndEndDates['Start Date']) + '\n  End Year: ' + str(startAndEndDates['End Date']))
-barplotLength = input('How long would you like a bar graph to be with a averaged co2 level representing each bar(Type a integer greater than 0): ')
+barplotLength = input('How long would you like a bar graph and a box plot to be with a averaged co2 level representing each bar and regular co2 level representing each box(Type a integer greater than 0): ')
 while not barplotLength.isnumeric() or int(barplotLength) <= 0:
   print('Invalid Number!')
-  barplotLength = input('How long would you like a bar graph to be with a averaged co2 level representing each bar(Type a integer greater than 0): ')
+  barplotLength = input('How long would you like a bar graph and a box plot to be with a averaged co2 level representing each bar and regular co2 level representing each box(Type a integer greater than 0): ')
 barplotLength = int(barplotLength)
 for i in range(barplotLength):
   personalizedYear = input('Type a year from 1958 to 2017 to include in your bar graph: ')
@@ -117,6 +130,10 @@ for j in range(len(personalizedYears)):
     boxPlotPersonalizedAveragedCo2Dict['Years'].append(personalizedYears[j])
     boxPlotPersonalizedAveragedCo2Dict['Co2'].append(yearlyCo2Dict[personalizedYears[j]][i])
 df6 = pan.DataFrame(data = boxPlotPersonalizedAveragedCo2Dict)
+lineplotVariatingYearlyMonthlyCo2Dict = {'Years': validMonthlyYears, 'Co2': []}
+for i in range(len(validMonthlyYears)):
+  lineplotVariatingYearlyMonthlyCo2Dict['Co2'].append(variatingYearlyMonthlyCo2Dict[validMonthlyYears[i]])
+df7 = pan.DataFrame(data = lineplotVariatingYearlyMonthlyCo2Dict)
 
 
 
@@ -147,6 +164,10 @@ Co2LevelsBoxplot = sns.boxplot(x = 'Years', y = 'Co2', data = df6)
 Co2LevelsBoxplot.set(title = 'Years Vs. Carbon Dioxide in ppm at Mauna Loa Observatory', ylabel = "Co2", xlabel = "Years")
 plt.savefig('Co2LevelsBoxplot.png')
 plt.clf()
+Co2VariatingLevelsLineplot = sns.lineplot(x = 'Years', y = 'Co2', data = df7)
+Co2VariatingLevelsLineplot.set(title = 'Years Vs. Carbon Dioxide in ppm at Mauna Loa Observatory Variability', ylabel = "Co2", xlabel = "Years")
+plt.savefig('Co2VariatingLevelsLineplot.png')
+plt.clf()
 
 
 
@@ -160,7 +181,7 @@ print('Key in ppm of carbon dioxide levels:\n  <450 = Best\n  450-700 = Great\n 
 
 
 #Printing the instructions
-print('\nClick on "Co2AvgLevelsLineplot.png" to see the average co2 levels in ppm from 1958 to 2017.\nClick on "Co2LevelsScatterplot.png" to see the co2 levels in ppm from 1958 to 2017.\nIn "Co2LevelsScatterplot.png", the data is set so that you will see all the months of a year of markers in a one year.')
+print('Analysis:\n  From the data in "Co2AvgLevelsLineplot.png" and "Co2LevelsScatterplot.png" I observed that there is a positive trend between the years and the co2 levels. The difference between "Co2AvgLevelsLineplot.png" and "Co2LevelsScatterplot.png" is that in "Co2LevelsScatterplot.png", the data is more spread out but the analysis is the same.\n  In "Co2PersonalizedAvgLevelsLineplot.png" and "Co2PersonalizedLevelsScatterplot.png", the data can be adjusted to your favor, focusing on the part you want to see.\n  In "Co2PersonalizedLevelsBarplot.png"')
 
 
 
@@ -173,5 +194,6 @@ f.close()
 
 
 
-#Ideas:
-#One bar graph showing all months in one particular year. Compare 1960 Co2 Data Vs. 2010 Co2 Data
+#To-Do:
+#Analysis
+#Presentation
